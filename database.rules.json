@@ -1,0 +1,212 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && newData.exists()",
+        ".validate": "newData.hasChildren([\"schemaVersion\",\"name\",\"joined\",\"league\",\"baseXp\",\"receipts\",\"xp\",\"levels\",\"totalXp\",\"level\"]) && newData.child('schemaVersion').val() === 2 && newData.child('totalXp').val() === (newData.child('xp/Social').val() + newData.child('xp/Guts').val() + newData.child('xp/Smarts').val() + newData.child('xp/Vitality').val()) && newData.child('level').val() === 1 + (newData.child('totalXp').val() - newData.child('totalXp').val() % 200) / 200 && newData.child('baseXp/Social').val() === (data.child('schemaVersion').val() === 2 ? data.child('baseXp/Social').val() : (data.child('xp/Social').exists() ? data.child('xp/Social').val() : 0)) && newData.child('xp/Social').val() === newData.child('baseXp/Social').val() + newData.child('receipts/compliment/count').val() * 40 + newData.child('receipts/listen/count').val() * 50 && newData.child('levels/Social').val() === 1 + (newData.child('xp/Social').val() - newData.child('xp/Social').val() % 200) / 200 && newData.child('baseXp/Guts').val() === (data.child('schemaVersion').val() === 2 ? data.child('baseXp/Guts').val() : (data.child('xp/Guts').exists() ? data.child('xp/Guts').val() : 0)) && newData.child('xp/Guts').val() === newData.child('baseXp/Guts').val() + newData.child('receipts/speak/count').val() * 60 && newData.child('levels/Guts').val() === 1 + (newData.child('xp/Guts').val() - newData.child('xp/Guts').val() % 200) / 200 && newData.child('baseXp/Smarts').val() === (data.child('schemaVersion').val() === 2 ? data.child('baseXp/Smarts').val() : (data.child('xp/Smarts').exists() ? data.child('xp/Smarts').val() : 0)) && newData.child('xp/Smarts').val() === newData.child('baseXp/Smarts').val() + newData.child('receipts/study/count').val() * 75 + newData.child('receipts/build/count').val() * 65 && newData.child('levels/Smarts').val() === 1 + (newData.child('xp/Smarts').val() - newData.child('xp/Smarts').val() % 200) / 200 && newData.child('baseXp/Vitality').val() === (data.child('schemaVersion').val() === 2 ? data.child('baseXp/Vitality').val() : (data.child('xp/Vitality').exists() ? data.child('xp/Vitality').val() : 0)) && newData.child('xp/Vitality').val() === newData.child('baseXp/Vitality').val() + newData.child('receipts/walk/count').val() * 50 && newData.child('levels/Vitality').val() === 1 + (newData.child('xp/Vitality').val() - newData.child('xp/Vitality').val() % 200) / 200 && (data.child('schemaVersion').val() === 2 ? ((newData.child('receipts/compliment/count').val() === data.child('receipts/compliment/count').val() && newData.child('receipts/compliment/lastDay').val() === data.child('receipts/compliment/lastDay').val()) || (newData.child('receipts/compliment/count').val() === data.child('receipts/compliment/count').val() + 1 && newData.child('receipts/compliment/lastDay').val() === ((now - now % 86400000) / 86400000) && data.child('receipts/compliment/lastDay').val() < ((now - now % 86400000) / 86400000))) : (newData.child('receipts/compliment/count').val() === 0 && newData.child('receipts/compliment/lastDay').val() === (data.exists() ? ((now - now % 86400000) / 86400000) : -1))) && (data.child('schemaVersion').val() === 2 ? ((newData.child('receipts/speak/count').val() === data.child('receipts/speak/count').val() && newData.child('receipts/speak/lastDay').val() === data.child('receipts/speak/lastDay').val()) || (newData.child('receipts/speak/count').val() === data.child('receipts/speak/count').val() + 1 && newData.child('receipts/speak/lastDay').val() === ((now - now % 86400000) / 86400000) && data.child('receipts/speak/lastDay').val() < ((now - now % 86400000) / 86400000))) : (newData.child('receipts/speak/count').val() === 0 && newData.child('receipts/speak/lastDay').val() === (data.exists() ? ((now - now % 86400000) / 86400000) : -1))) && (data.child('schemaVersion').val() === 2 ? ((newData.child('receipts/study/count').val() === data.child('receipts/study/count').val() && newData.child('receipts/study/lastDay').val() === data.child('receipts/study/lastDay').val()) || (newData.child('receipts/study/count').val() === data.child('receipts/study/count').val() + 1 && newData.child('receipts/study/lastDay').val() === ((now - now % 86400000) / 86400000) && data.child('receipts/study/lastDay').val() < ((now - now % 86400000) / 86400000))) : (newData.child('receipts/study/count').val() === 0 && newData.child('receipts/study/lastDay').val() === (data.exists() ? ((now - now % 86400000) / 86400000) : -1))) && (data.child('schemaVersion').val() === 2 ? ((newData.child('receipts/walk/count').val() === data.child('receipts/walk/count').val() && newData.child('receipts/walk/lastDay').val() === data.child('receipts/walk/lastDay').val()) || (newData.child('receipts/walk/count').val() === data.child('receipts/walk/count').val() + 1 && newData.child('receipts/walk/lastDay').val() === ((now - now % 86400000) / 86400000) && data.child('receipts/walk/lastDay').val() < ((now - now % 86400000) / 86400000))) : (newData.child('receipts/walk/count').val() === 0 && newData.child('receipts/walk/lastDay').val() === (data.exists() ? ((now - now % 86400000) / 86400000) : -1))) && (data.child('schemaVersion').val() === 2 ? ((newData.child('receipts/listen/count').val() === data.child('receipts/listen/count').val() && newData.child('receipts/listen/lastDay').val() === data.child('receipts/listen/lastDay').val()) || (newData.child('receipts/listen/count').val() === data.child('receipts/listen/count').val() + 1 && newData.child('receipts/listen/lastDay').val() === ((now - now % 86400000) / 86400000) && data.child('receipts/listen/lastDay').val() < ((now - now % 86400000) / 86400000))) : (newData.child('receipts/listen/count').val() === 0 && newData.child('receipts/listen/lastDay').val() === (data.exists() ? ((now - now % 86400000) / 86400000) : -1))) && (data.child('schemaVersion').val() === 2 ? ((newData.child('receipts/build/count').val() === data.child('receipts/build/count').val() && newData.child('receipts/build/lastDay').val() === data.child('receipts/build/lastDay').val()) || (newData.child('receipts/build/count').val() === data.child('receipts/build/count').val() + 1 && newData.child('receipts/build/lastDay').val() === ((now - now % 86400000) / 86400000) && data.child('receipts/build/lastDay').val() < ((now - now % 86400000) / 86400000))) : (newData.child('receipts/build/count').val() === 0 && newData.child('receipts/build/lastDay').val() === (data.exists() ? ((now - now % 86400000) / 86400000) : -1))) && (data.child('schemaVersion').val() === 2 && data.child('joined').val() === true && newData.child('totalXp').val() > data.child('totalXp').val() ? newData.child('earnings/' + ((now - now % 86400000) / 86400000)).val() === (data.child('earnings/' + ((now - now % 86400000) / 86400000)).exists() ? data.child('earnings/' + ((now - now % 86400000) / 86400000)).val() : 0) + newData.child('totalXp').val() - data.child('totalXp').val() : (newData.child('earnings/' + ((now - now % 86400000) / 86400000)).val() === data.child('earnings/' + ((now - now % 86400000) / 86400000)).val()))",
+        "schemaVersion": {
+          ".validate": "newData.val() === 2"
+        },
+        "name": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 24"
+        },
+        "joined": {
+          ".validate": "newData.isBoolean() && (data.val() !== true || newData.val() === true)"
+        },
+        "league": {
+          ".validate": "newData.val() === (data.exists() ? data.val() : 'Bronze')"
+        },
+        "totalXp": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "level": {
+          ".validate": "newData.isNumber()"
+        },
+        "baseXp": {
+          ".validate": "newData.hasChildren([\"Social\",\"Guts\",\"Smarts\",\"Vitality\"])",
+          "$other": {
+            ".validate": false
+          },
+          "Social": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "Guts": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "Smarts": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "Vitality": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          }
+        },
+        "xp": {
+          ".validate": "newData.hasChildren([\"Social\",\"Guts\",\"Smarts\",\"Vitality\"])",
+          "$other": {
+            ".validate": false
+          },
+          "Social": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "Guts": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "Smarts": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "Vitality": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          }
+        },
+        "levels": {
+          ".validate": "newData.hasChildren([\"Social\",\"Guts\",\"Smarts\",\"Vitality\"])",
+          "$other": {
+            ".validate": false
+          },
+          "Social": {
+            ".validate": "newData.isNumber()"
+          },
+          "Guts": {
+            ".validate": "newData.isNumber()"
+          },
+          "Smarts": {
+            ".validate": "newData.isNumber()"
+          },
+          "Vitality": {
+            ".validate": "newData.isNumber()"
+          }
+        },
+        "receipts": {
+          ".validate": "newData.hasChildren([\"compliment\",\"speak\",\"study\",\"walk\",\"listen\",\"build\"])",
+          "$other": {
+            ".validate": false
+          },
+          "compliment": {
+            ".validate": "newData.hasChildren(['count','lastDay'])",
+            "count": {
+              ".validate": "newData.isNumber()"
+            },
+            "lastDay": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "speak": {
+            ".validate": "newData.hasChildren(['count','lastDay'])",
+            "count": {
+              ".validate": "newData.isNumber()"
+            },
+            "lastDay": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "study": {
+            ".validate": "newData.hasChildren(['count','lastDay'])",
+            "count": {
+              ".validate": "newData.isNumber()"
+            },
+            "lastDay": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "walk": {
+            ".validate": "newData.hasChildren(['count','lastDay'])",
+            "count": {
+              ".validate": "newData.isNumber()"
+            },
+            "lastDay": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "listen": {
+            ".validate": "newData.hasChildren(['count','lastDay'])",
+            "count": {
+              ".validate": "newData.isNumber()"
+            },
+            "lastDay": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "build": {
+            ".validate": "newData.hasChildren(['count','lastDay'])",
+            "count": {
+              ".validate": "newData.isNumber()"
+            },
+            "lastDay": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "activityDays": {
+          "$day": {
+            ".validate": "newData.val() === true && (data.val() === true || ($day === ((now - now % 86400000) / 86400000) + '' && newData.parent().parent().child('totalXp').val() > root.child('users').child($uid).child('totalXp').val()))"
+          }
+        },
+        "earnings": {
+          "$day": {
+            ".validate": "newData.isNumber() && (newData.val() === data.val() || ($day === ((now - now % 86400000) / 86400000) + '' && newData.parent().parent().child('joined').val() === true && newData.val() === (data.exists() ? data.val() : 0) + newData.parent().parent().child('totalXp').val() - (root.child('users').child($uid).child('totalXp').exists() ? root.child('users').child($uid).child('totalXp').val() : 0)))"
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "competition": {
+      ".read": "auth != null"
+    },
+    "leagueResults": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid"
+      }
+    },
+    "leagueBoards": {
+      "$league": {
+        ".read": "auth != null && query.orderByChild === 'xp' && query.limitToLast != null && query.limitToLast <= 100",
+        ".indexOn": [
+          "xp"
+        ],
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && root.child('users').child($uid).child('joined').val() === true && root.child('users').child($uid).child('league').val() === $league && root.child('competition').exists() && newData.exists()",
+          ".validate": "newData.hasChildren(['name','xp','level','weekId']) && newData.child('name').val() === root.child('users').child($uid).child('name').val() && newData.child('level').val() === root.child('users').child($uid).child('level').val() && newData.child('weekId').val() === root.child('competition').child('weekId').val() && newData.child('xp').val() === ((root.child('competition').child('weekStartDay').val() + 0 < root.child('competition').child('weekEndDay').val() && root.child('users').child($uid).child('earnings').child(('' + (root.child('competition').child('weekStartDay').val() + 0))).exists() ? root.child('users').child($uid).child('earnings').child(('' + (root.child('competition').child('weekStartDay').val() + 0))).val() : 0) + (root.child('competition').child('weekStartDay').val() + 1 < root.child('competition').child('weekEndDay').val() && root.child('users').child($uid).child('earnings').child(('' + (root.child('competition').child('weekStartDay').val() + 1))).exists() ? root.child('users').child($uid).child('earnings').child(('' + (root.child('competition').child('weekStartDay').val() + 1))).val() : 0) + (root.child('competition').child('weekStartDay').val() + 2 < root.child('competition').child('weekEndDay').val() && root.child('users').child($uid).child('earnings').child(('' + (root.child('competition').child('weekStartDay').val() + 2))).exists() ? root.child('users').child($uid).child('earnings').child(('' + (root.child('competition').child('weekStartDay').val() + 2))).val() : 0) + (root.child('competition').child('weekStartDay').val() + 3 < root.child('competition').child('weekEndDay').val() && root.child('users').child($uid).child('earnings').child(('' + (root.child('competition').child('weekStartDay').val() + 3))).exists() ? root.child('users').child($uid).child('earnings').child(('' + (root.child('competition').child('weekStartDay').val() + 3))).val() : 0) + (root.child('competition').child('weekStartDay').val() + 4 < root.child('competition').child('weekEndDay').val() && root.child('users').child($uid).child('earnings').child(('' + (root.child('competition').child('weekStartDay').val() + 4))).exists() ? root.child('users').child($uid).child('earnings').child(('' + (root.child('competition').child('weekStartDay').val() + 4))).val() : 0) + (root.child('competition').child('weekStartDay').val() + 5 < root.child('competition').child('weekEndDay').val() && root.child('users').child($uid).child('earnings').child(('' + (root.child('competition').child('weekStartDay').val() + 5))).exists() ? root.child('users').child($uid).child('earnings').child(('' + (root.child('competition').child('weekStartDay').val() + 5))).val() : 0) + (root.child('competition').child('weekStartDay').val() + 6 < root.child('competition').child('weekEndDay').val() && root.child('users').child($uid).child('earnings').child(('' + (root.child('competition').child('weekStartDay').val() + 6))).exists() ? root.child('users').child($uid).child('earnings').child(('' + (root.child('competition').child('weekStartDay').val() + 6))).val() : 0))",
+          "name": {
+            ".validate": "newData.isString()"
+          },
+          "xp": {
+            ".validate": "newData.isNumber()"
+          },
+          "level": {
+            ".validate": "newData.isNumber()"
+          },
+          "weekId": {
+            ".validate": "newData.isString()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    }
+  }
+}

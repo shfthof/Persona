@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Persona",
+    "slug": "persona",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/brand/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.persona.leveling",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "app.persona.leveling",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brand/icon.png",
+        "backgroundColor": "#08090B"
+      }
+    },
+    "web": {
+      "favicon": "./assets/brand/favicon.png",
+      "output": "single"
+    },
+    "scheme": "persona",
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "owner": "shfthdev",
+    "backgroundColor": "#08090B",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "aeb88c28-99f6-4c1a-b2f4-318586065d85"
+      }
+    }
+  }
+}
