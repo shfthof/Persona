@@ -1,1 +1,0 @@
-{"name":"persona-league-scheduler","private":true,"scripts":{"start":"node run.cjs"},"engines":{"node":">=22"},"dependencies":{"firebase-admin":"^14.5.0"}}

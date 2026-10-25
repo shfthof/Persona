@@ -1,5 +1,5 @@
 import { usePathname, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -12,28 +12,21 @@ import {
   Image,
   ActivityIndicator,
   Platform,
+  AppState,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { User } from "@supabase/supabase-js";
 import {
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  User,
-} from "firebase/auth";
-import {
-  ref,
-  onValue,
-  query,
-  orderByChild,
-  limitToLast,
-} from "firebase/database";
-import { saveProgress, syncLeaderboard, cloudError } from "./src/cloud";
+  saveProgress,
+  getCompetition,
+  getLeaderboard,
+  cloudError,
+} from "./src/cloud";
 import { LEAGUES, Competition, DAY } from "./shared/progression";
-import { auth, db, configured } from "./src/firebase";
+import { supabase, configured } from "./src/supabase";
 import {
   fromCloud,
   stats,
@@ -160,94 +153,138 @@ function Persona() {
     );
     return () => clearInterval(t);
   }, [serverOffset]);
+  const loadedIdentity = useRef<string | null | undefined>(undefined);
   useEffect(() => {
     let active = true;
     async function load(u: User | null) {
+      if (!active || loadedIdentity.current === (u?.id ?? null)) return;
+      loadedIdentity.current = u?.id ?? null;
       setReady(false);
       setUser(u);
       try {
         const v = u ? null : await AsyncStorage.getItem("persona-demo-v1");
-        if (active) setProgress(v ? JSON.parse(v) : initialProgress);
+        if (active && loadedIdentity.current === (u?.id ?? null))
+          setProgress(v ? JSON.parse(v) : initialProgress);
       } catch {
         if (active) setNotice("Could not restore local progress.");
       } finally {
         if (active) setReady(true);
       }
     }
-    if (auth) {
-      const unsubscribe = onAuthStateChanged(auth, load);
+    if (supabase) {
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (active) void load(session?.user ?? null);
+      });
+      supabase.auth.getSession().then(({ data, error }) => {
+        if (!active) return;
+        if (error) setNotice(cloudError(error));
+        void load(data.session?.user ?? null);
+      });
       return () => {
         active = false;
-        unsubscribe();
+        subscription.unsubscribe();
       };
     }
-    load(null);
+    void load(null);
     return () => {
       active = false;
     };
   }, []);
   useEffect(() => {
-    if (!user || !db) {
+    if (!supabase || Platform.OS === "web") return;
+    const update = (state: string) => {
+      if (state === "active") supabase!.auth.startAutoRefresh();
+      else supabase!.auth.stopAutoRefresh();
+    };
+    update(AppState.currentState);
+    const subscription = AppState.addEventListener("change", update);
+    return () => {
+      subscription.remove();
+      supabase!.auth.stopAutoRefresh();
+    };
+  }, []);
+  useEffect(() => {
+    if (!user || !supabase) {
       setLeaders([]);
+      setCompetition(null);
+      setCloudWarning("");
       return;
     }
     let active = true;
-    const a = onValue(
-      ref(db, `users/${user.uid}`),
-      (snap) => {
-        if (snap.exists()) setProgress(fromCloud(snap.val()));
-      },
-      (e) => setCloudWarning(cloudError(e)),
-    );
-    const b = onValue(
-      ref(db, "competition"),
-      (snap) => setCompetition(snap.val()),
-      (e) => setCloudWarning(cloudError(e)),
-    );
-    const clock = onValue(ref(db, ".info/serverTimeOffset"), (snap) =>
-      setServerOffset(snap.val() || 0),
-    );
-    saveProgress({ type: "ensure" }).catch((e) => {
-      if (active) setCloudWarning(cloudError(e));
+    const refresh = async () => {
+      try {
+        const [p, c, clock] = await Promise.all([
+          saveProgress({ type: "ensure" }),
+          getCompetition(),
+          supabase!.rpc("server_time"),
+        ]);
+        if (!active) return;
+        setProgress(fromCloud(p));
+        setCompetition(c);
+        if (!clock.error) setServerOffset(clock.data - Date.now());
+        setCloudWarning("");
+      } catch (e) {
+        if (active) setCloudWarning(cloudError(e));
+      }
+    };
+    void refresh();
+    const channel = supabase
+      .channel(`persona-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          if (active) setProgress(fromCloud(payload.new.data));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "competition" },
+        (payload) => {
+          if (active) setCompetition(payload.new.data as Competition);
+        },
+      )
+      .subscribe();
+    const foreground = AppState.addEventListener("change", (state) => {
+      if (state === "active") void refresh();
     });
     return () => {
       active = false;
-      a();
-      b();
-      clock();
+      foreground.remove();
+      void supabase!.removeChannel(channel);
     };
-  }, [user]);
+  }, [user?.id]);
   useEffect(() => {
     setLeagueFilter(progress.league || "Bronze");
   }, [progress.league]);
   useEffect(() => {
-    if (!user || !db) return;
-    return onValue(
-      query(
-        ref(db, `leagueBoards/${leagueFilter}`),
-        orderByChild("xp"),
-        limitToLast(100),
-      ),
-      (snap) => {
-        const rows: { id: string; name: string; xp: number }[] = [];
-        snap.forEach((child) => {
-          const r = child.val();
-          if (r.weekId === competition?.weekId)
-            rows.push({ id: child.key!, name: r.name, xp: r.xp });
+    if (!user || !supabase) return;
+    let active = true;
+    const refresh = () =>
+      getLeaderboard(leagueFilter)
+        .then((rows) => {
+          if (active) setLeaders(rows);
+        })
+        .catch((e) => {
+          if (active) setCloudWarning(cloudError(e));
         });
-        setLeaders(rows.reverse());
-      },
-      (e) => setCloudWarning(cloudError(e)),
-    );
-  }, [user, leagueFilter, competition?.weekId]);
-  useEffect(() => {
-    if (!user || !progress.saved || !competition) return;
-    syncLeaderboard(progress.saved, competition).catch(() =>
-      setCloudWarning(
-        "Your progress is saved. Rankings will refresh when the scheduled league job runs.",
-      ),
-    );
-  }, [user, progress.saved, competition]);
+    void refresh();
+    const interval = setInterval(() => {
+      if (AppState.currentState === "active" || Platform.OS === "web")
+        void refresh();
+    }, 30000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [user?.id, leagueFilter, competition?.weekId, progress.saved]);
   useEffect(() => {
     if (ready && !user)
       AsyncStorage.setItem("persona-demo-v1", JSON.stringify(progress)).catch(
@@ -267,14 +304,11 @@ function Persona() {
     setBusy(true);
     try {
       if (user) {
-        const saved = await saveProgress(
-          {
-            type,
-            ...(id ? { id } : {}),
-            ...(type === "profile" ? { name } : {}),
-          },
-          serverOffset,
-        );
+        const saved = await saveProgress({
+          type,
+          ...(id ? { id } : {}),
+          ...(type === "profile" ? { name } : {}),
+        });
         setProgress(fromCloud(saved));
         setCloudWarning("");
       } else if (type === "complete") {
@@ -303,20 +337,29 @@ function Persona() {
     }
   }
   async function authenticate() {
-    if (!auth) {
+    if (!supabase) {
       setNotice(
-        "Add your Firebase configuration to enable accounts. Demo progress is saved on this device.",
+        "Add your Supabase configuration to enable accounts. Demo progress is saved on this device.",
       );
       return;
     }
     setBusy(true);
     try {
-      if (signup)
-        await createUserWithEmailAndPassword(auth, email.trim(), password);
-      else await signInWithEmailAndPassword(auth, email.trim(), password);
-      setAccount(false);
+      const credentials = { email: email.trim(), password };
+      const result = signup
+        ? await supabase.auth.signUp(credentials)
+        : await supabase.auth.signInWithPassword(credentials);
+      if (result.error) throw result.error;
       setPassword("");
-      setNotice("Welcome to your Persona account.");
+      if (signup && !result.data.session) {
+        setSignup(false);
+        setNotice(
+          "Check your email to confirm your account, then sign in here.",
+        );
+      } else {
+        setAccount(false);
+        setNotice("Welcome to your Persona account.");
+      }
     } catch (e: any) {
       setNotice(e.message);
     } finally {
@@ -621,11 +664,11 @@ function Persona() {
                   secondary
                   onPress={() => {
                     setBusy(true);
-                    saveProgress({ type: "ensure" }, serverOffset)
+                    saveProgress({ type: "ensure" })
                       .then((p) => {
                         setProgress(fromCloud(p));
                         setCloudWarning("");
-                        return syncLeaderboard(p, competition);
+                        return getCompetition().then(setCompetition);
                       })
                       .catch((e) => setCloudWarning(cloudError(e)))
                       .finally(() => setBusy(false));
@@ -880,7 +923,7 @@ function Persona() {
                         </View>
                         <Text style={[s.bold, { flex: 1 }]}>
                           {p.name}
-                          {p.id === user?.uid ? " (you)" : ""}
+                          {p.id === user?.id ? " (you)" : ""}
                         </Text>
                         <Text style={s.xp}>{p.xp.toLocaleString()} XP</Text>
                       </View>
@@ -902,8 +945,8 @@ function Persona() {
                   )}
                 </View>
                 <Text style={[s.tiny, { marginTop: 15 }]}>
-                  Firebase rules validate XP once per challenge per UTC day.
-                  Challenges are self-reported.
+                  Each challenge awards XP once per UTC day. Challenges are
+                  self-reported.
                 </Text>
               </>
             )}
@@ -975,7 +1018,7 @@ function Persona() {
               <Text style={s.tiny}>persona. / Become more you.</Text>
               <Text style={s.tiny}>
                 {user
-                  ? "Synced with Firebase"
+                  ? "Synced with Supabase"
                   : "Demo mode · Saved on this device"}
               </Text>
             </View>
@@ -1064,14 +1107,15 @@ function Persona() {
                     ? user.email
                     : configured
                       ? "Save your progress across devices and join the league."
-                      : "You’re exploring a local demo. Firebase configuration is needed to enable accounts and live rankings."}
+                      : "You’re exploring a local demo. Supabase configuration is needed to enable accounts and live rankings."}
                 </Text>
                 {user ? (
                   <Button
                     title="Sign out"
                     onPress={async () => {
                       try {
-                        await signOut(auth!);
+                        const { error } = await supabase!.auth.signOut();
+                        if (error) throw error;
                         setAccount(false);
                       } catch {
                         setNotice("Could not sign out. Please try again.");

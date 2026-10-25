@@ -1,52 +1,31 @@
 # Persona
 
-**Become more you.** A dark Expo SDK 57 / React Native app for Social, Guts, Smarts and Vitality challenges.
+**Become a little more you.** An Expo / React Native app for daily Social, Guts, Smarts, and Vitality challenges, with a black-and-white interface, blue accents, and masquerade-mask branding.
 
 ## Run
 
 ```sh
 npm install
+cp .env.example .env.local
+# Set your Supabase publishable key in .env.local
 npm start
 ```
 
-Press `w` for web or scan the terminal QR code with Expo Go. For physical iOS Expo Go, sign into `shfthdev` on the phone and Expo CLI. Native app builds use `eas.json`; EAS project initialization is still needed before the first cloud build.
+Supabase Auth handles accounts; Postgres stores XP, levels, completion history, and leagues. Server functions validate rewards and Supabase Cron handles weekly promotions and five-month seasons. The project database has been provisioned; no manual data seeds are required.
 
-## Firebase and leagues — no paid Cloud Functions
-
-See **[Free backend setup](docs/FREE-BACKEND.md)** for the exact Firebase rules, GitHub Actions secret, scheduler activation, data schema and league policy.
-
-```sh
-npm run deploy:firebase
-```
-
-This deploys database rules only. Sign-in, profile updates, XP, levels, daily completions and ranked opt-in use rule-validated Realtime Database transactions. The GitHub job in `.github/workflows/leagues.yml` handles weekly promotions, Champions demotions, and five-calendar-month resets. The backend is not active merely because these files exist: publish the rules and activate the workflow with its secret.
-
-Copy `.env.example` to `.env.local` when setting up another checkout. The five public Firebase configuration values must also be configured in EAS for cloud builds. Never put a service-account key in the app.
+Read [Supabase setup and security](docs/SUPABASE.md) for account confirmation, existing Firebase migration limitations, database tables, scheduling, and credential handling.
 
 ## Checks
 
 ```sh
 npm test
-npm run test:rules
 npm run lint
 npm run typecheck
-npx expo-doctor
-npm run export -- --platform all
+npm run export
 ```
 
-Regenerate rules after changing fixed challenge rewards with `npm run rules:generate`, then run the emulator tests before publishing them. `shared/progression.js` supplies progression logic shared by the app, rule generator and scheduler.
+Database integration checks: `supabase/tests/security.sql`.
 
-## Expo builds
+## Mobile builds
 
-```sh
-npx eas-cli@latest login
-npx eas-cli@latest init
-npx eas-cli@latest build --profile preview --platform android
-npx eas-cli@latest build --profile production --platform all
-```
-
-The Expo owner is `shfthdev`. iOS device/store distribution requires Apple signing and provisioning. Native bundle exports are not installable app builds or evidence of an on-device test.
-
-## Identity
-
-Black and white with blue accents, a vector masquerade mask, and an original generated glass-ribbon hero. See `assets/brand/README.md` for assets and the generation prompt.
+The app uses Expo SDK 57, Expo Router and EAS configuration in `eas.json`. Use the configured Expo owner `shfthdev`. Consult the SDK-matching EAS documentation before building/signing or submitting releases. Native builds are separate from the verified JavaScript bundle export.
