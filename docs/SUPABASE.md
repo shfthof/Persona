@@ -52,3 +52,11 @@ The complete schema is in `supabase/migrations/`. It was applied to the hosted p
 Run `npm test`, `npm run lint`, `npm run typecheck`, and `npm run export` before release. Run Supabase security advisors after schema changes.
 
 Dependency audit note: the existing Expo 57 toolchain still reports transitive npm advisories (including node-forge, zod, uuid and decode-uri-component). No Supabase dependency advisories were reported. Review SDK-compatible upgrades separately; do not apply the suggested forced Expo downgrade.
+
+## Branded confirmation email
+
+Subject: **Confirm your email for your Persona account**.
+
+The ready-to-use dark Persona template is `supabase/templates/confirmation.html`. Local Supabase configuration points to this file. To publish it for the hosted project, open Authentication → Email Templates → Confirm signup, set the subject above, paste the HTML and save. Preserve both `{{ .ConfirmationURL }}` placeholders: Supabase supplies each recipient's secure confirmation link.
+
+This template is prepared locally; it has not yet been applied to the hosted email settings. New free-tier projects using Supabase's default SMTP cannot customize templates; configure your own SMTP provider first if the editor is restricted. See [Supabase's template policy](https://supabase.com/changelog/46599-changes-to-email-template-customisation-on-free-tier).
